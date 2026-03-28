@@ -616,13 +616,15 @@ const AppDetailView = ({ app, onBack, onDelete, onUpdate, isDeleting }) => {
               Recent Activity
             </Typography>
             
-            {[
-              { time: '2 min ago', action: 'Scan from iPhone 15 Pro', location: 'United States' },
-              { time: '15 min ago', action: 'Scan from Samsung Galaxy S23', location: 'United Kingdom' },
-              { time: '1 hour ago', action: 'Scan from Pixel 7', location: 'Germany' },
-              { time: '3 hours ago', action: 'New user from App Store', location: 'Canada' },
-              { time: '5 hours ago', action: 'Scan from iPhone 14', location: 'Australia' },
-            ].map((activity, index) => (
+            {(loadingAnalytics ? [
+              { time: '...', action: 'Loading...', location: '-' },
+              { time: '...', action: 'Loading...', location: '-' },
+              { time: '...', action: 'Loading...', location: '-' },
+              { time: '...', action: 'Loading...', location: '-' },
+              { time: '...', action: 'Loading...', location: '-' },
+            ] : (analytics?.recentActivity || [
+              { time: 'No activity', action: 'No recent clicks', location: '-' },
+            ])).map((activity, index) => (
               <Box 
                 key={index}
                 sx={{ 
@@ -637,7 +639,7 @@ const AppDetailView = ({ app, onBack, onDelete, onUpdate, isDeleting }) => {
                   sx={{ 
                     width: 8, 
                     height: 8, 
-                    borderRadius: '50%', 
+                    borderRadius: '50', 
                     bgcolor: '#2563eb',
                     flexShrink: 0
                   }}
