@@ -48,6 +48,31 @@ export async function POST(request) {
   }
 }
 
+export async function PUT(request) {
+  try {
+    const updatedApp = await request.json();
+    let apps = getApps();
+    
+    // Find and update the app
+    const index = apps.findIndex(app => app.id === updatedApp.id);
+    if (index === -1) {
+      return NextResponse.json({ success: false, error: 'App not found' }, { status: 404 });
+    }
+    
+    apps[index] = { ...apps[index], ...updatedApp };
+    
+    const success = saveApps(apps);
+    
+    if (success) {
+      return NextResponse.json({ success: true, app: apps[index] });
+    } else {
+      return NextResponse.json({ success: false, error: 'Failed to update app' }, { status: 500 });
+    }
+  } catch (error) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);

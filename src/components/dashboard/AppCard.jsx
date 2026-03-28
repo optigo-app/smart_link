@@ -58,16 +58,21 @@ const AppCard = ({ app, onClick }) => {
             sx={{
               width: 52,
               height: 52,
-              background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
               borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#64748b',
               transition: 'all 0.3s ease',
+              overflow: 'hidden',
+              bgcolor: app.icon ? 'transparent' : 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)'
             }}
           >
-            <Smartphone size={24} />
+            {app.icon ? (
+              <img src={app.icon} alt={app.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <Smartphone size={24} />
+            )}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Chip 

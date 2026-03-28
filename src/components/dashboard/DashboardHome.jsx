@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import AppCard from './AppCard';
 
-const DashboardHome = ({ apps, onCreateNew, onViewApp }) => {
+const DashboardHome = ({ apps, onCreateNew, onViewApp, isLoading }) => {
   return (
     <Box sx={{ 
       maxWidth: 1600, 
@@ -224,84 +224,113 @@ const DashboardHome = ({ apps, onCreateNew, onViewApp }) => {
             letterSpacing: '0.05em'
           }}
         >
-          Your Smart Links ({apps.length})
+          {isLoading ? 'Loading...' : `Your Smart Links (${apps.length})`}
         </Typography>
       </Box>
       
       <Grid container spacing={3}>
-        <Grid item size={{ xs: 12, sm: 6, lg: 3 }}>
-          <Box
-            onClick={onCreateNew}
-            sx={{
-              border: '2px dashed #cbd5e1',
-              borderRadius: '20px',
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 2,
-              minHeight: 240,
-              cursor: 'pointer',
-              bgcolor: '#f8fafc',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                borderColor: '#2563eb',
-                bgcolor: 'rgba(37, 99, 235, 0.04)',
-                '& .add-icon': {
-                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                  color: 'white',
-                  boxShadow: '0 8px 20px rgba(37, 99, 235, 0.35)',
-                },
-              }
-            }}
-          >
-            <Box 
-              className="add-icon"
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: 3.5,
-                bgcolor: '#f1f5f9',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease',
-              }}
-            >
-              <Plus size={28} color="#64748b" />
-            </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  fontWeight: 700, 
-                  color: '#0f172a',
-                  display: 'block',
-                  fontSize: '1rem',
-                  mb: 0.5
+        {isLoading ? (
+          <>
+            {[1, 2, 3, 4].map(i => (
+              <Grid item size={{ xs: 12, sm: 6, lg: 3 }} key={i}>
+                <Box
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    border: '1px solid #e2e8f0',
+                    bgcolor: '#ffffff',
+                    minHeight: 240,
+                    animation: 'pulse 2s infinite',
+                    '@keyframes pulse': {
+                      '0%, 100%': { opacity: 1 },
+                      '50%': { opacity: 0.5 },
+                    }
+                  }}
+                >
+                  <Box sx={{ width: '100%', height: 48, bgcolor: '#f1f5f9', borderRadius: 2, mb: 2 }} />
+                  <Box sx={{ width: '60%', height: 20, bgcolor: '#f1f5f9', borderRadius: 1, mb: 1 }} />
+                  <Box sx={{ width: '40%', height: 16, bgcolor: '#f1f5f9', borderRadius: 1 }} />
+                </Box>
+              </Grid>
+            ))}
+          </>
+        ) : (
+          <>
+            <Grid item size={{ xs: 12, sm: 6, lg: 3 }}>
+              <Box
+                onClick={onCreateNew}
+                sx={{
+                  border: '2px dashed #cbd5e1',
+                  borderRadius: '20px',
+                  p: 4,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 2,
+                  minHeight: 240,
+                  cursor: 'pointer',
+                  bgcolor: '#f8fafc',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    borderColor: '#2563eb',
+                    bgcolor: 'rgba(37, 99, 235, 0.04)',
+                    '& .add-icon': {
+                      background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                      color: 'white',
+                      boxShadow: '0 8px 20px rgba(37, 99, 235, 0.35)',
+                    },
+                  }
                 }}
               >
-                New Smart Link
-              </Typography>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: '#94a3b8',
-                  fontWeight: 500,
-                  fontSize: '0.8rem'
-                }}
-              >
-                Add iOS & Android stores
-              </Typography>
-            </Box>
-          </Box>
-        </Grid>
-        {apps.map(app => (
-          <Grid item size={{ xs: 12, sm: 6, lg: 3 }} key={app.id}>
-            <AppCard app={app} onClick={() => onViewApp(app)} />
-          </Grid>
-        ))}
+                <Box 
+                  className="add-icon"
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: 3.5,
+                    bgcolor: '#f1f5f9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  <Plus size={28} color="#64748b" />
+                </Box>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      fontWeight: 700, 
+                      color: '#0f172a',
+                      display: 'block',
+                      fontSize: '1rem',
+                      mb: 0.5
+                    }}
+                  >
+                    New Smart Link
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: '#94a3b8',
+                      fontWeight: 500,
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    Add iOS & Android stores
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+            {apps.map(app => (
+              <Grid item size={{ xs: 12, sm: 6, lg: 3 }} key={app.id}>
+                <AppCard app={app} onClick={() => onViewApp(app)} />
+              </Grid>
+            ))}
+          </>
+        )}
       </Grid>
     </Box>
   );

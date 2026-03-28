@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { 
   Box, 
   Typography, 
@@ -19,12 +19,61 @@ import {
   Apple, 
   CheckCircle2,
   Sparkles,
-  Loader2
+  Loader2,
+  Upload,
+  X
 } from 'lucide-react';
 
 const CreateAppView = ({ formData, setFormData, isGenerating, onReset, onCreateNew }) => {
+  const fileInputRef = useRef(null);
+  const [uploadedIcon, setUploadedIcon] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleIconClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setUploadedIcon(e.target?.result);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    setUploading(true);
+    try {
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('appName', formData.name || 'app-' + Date.now());
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFormData(prev => ({ ...prev, icon: data.iconPath }));
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveIcon = () => {
+    setUploadedIcon(null);
+    setFormData(prev => ({ ...prev, icon: '' }));
   };
 
   return (
@@ -85,6 +134,74 @@ const CreateAppView = ({ formData, setFormData, isGenerating, onReset, onCreateN
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5 }}>
+              {/* App Icon Upload */}
+              <Box>
+                <Typography sx={{ fontWeight: 600, color: '#0f172a', mb: 1.5, fontSize: '0.9rem' }}>
+                  App Icon
+                </Typography>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                />
+                <Box
+                  onClick={handleIconClick}
+                  sx={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 3,
+                    border: '2px dashed #e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    bgcolor: '#f8fafc',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      borderColor: '#2563eb',
+                      bgcolor: 'rgba(37, 99, 235, 0.04)'
+                    }
+                  }}
+                >
+                  {uploading ? (
+                    <CircularProgress size={32} sx={{ color: '#2563eb' }} />
+                  ) : uploadedIcon ? (
+                    <>
+                      <img 
+                        src={uploadedIcon} 
+                        alt="App Icon" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={(e) => { e.stopPropagation(); handleRemoveIcon(); }}
+                        sx={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          bgcolor: 'rgba(0,0,0,0.5)',
+                          color: 'white',
+                          '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                          width: 24,
+                          height: 24
+                        }}
+                      >
+                        <X size={14} />
+                      </IconButton>
+                    </>
+                  ) : (
+                    <Box sx={{ textAlign: 'center', color: '#94a3b8' }}>
+                      <Upload size={24} />
+                      <Typography sx={{ fontSize: '0.7rem', mt: 0.5 }}>Upload</Typography>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+
               {/* App Name */}
               <Box>
                 <Typography sx={{ fontWeight: 600, color: '#0f172a', mb: 1.5, fontSize: '0.9rem' }}>
@@ -289,13 +406,16 @@ const CreateAppView = ({ formData, setFormData, isGenerating, onReset, onCreateN
                   width: 80,
                   height: 80,
                   borderRadius: 3,
-                  bgcolor: '#e2e8f0',
+                  bgcolor: uploadedIcon ? 'transparent' : '#e2e8f0',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  overflow: 'hidden'
                 }}
               >
-                {formData.name ? (
+                {uploadedIcon ? (
+                  <img src={uploadedIcon} alt="App Icon" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : formData.name ? (
                   <Typography sx={{ fontWeight: 800, fontSize: '1.5rem', color: '#64748b' }}>
                     {formData.name.charAt(0).toUpperCase()}
                   </Typography>

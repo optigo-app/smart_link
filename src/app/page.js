@@ -20,7 +20,7 @@ function generateSlug(name) {
 export default function Home() {
   const [view, setView] = useState('dashboard');
   const [selectedApp, setSelectedApp] = useState(null);
-  const [formData, setFormData] = useState({ name: '', android: '', ios: '' });
+  const [formData, setFormData] = useState({ name: '', android: '', ios: '', icon: '' });
   const [isGenerating, setIsGenerating] = useState(false);
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ export default function Home() {
 
   const resetFlow = () => {
     setView('dashboard');
-    setFormData({ name: '', android: '', ios: '' });
+    setFormData({ name: '', android: '', ios: '', icon: '' });
     setSelectedApp(null);
   };
 
@@ -68,7 +68,8 @@ export default function Home() {
       scans: '0',
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       android: formData.android,
-      ios: formData.ios
+      ios: formData.ios,
+      icon: formData.icon || ''
     };
 
     try {
@@ -110,6 +111,11 @@ export default function Home() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleUpdateApp = (updatedApp) => {
+    setApps(apps.map(app => app.id === updatedApp.id ? updatedApp : app));
+    setSelectedApp(updatedApp);
   };
 
   if (loading) {
@@ -157,6 +163,7 @@ export default function Home() {
             app={selectedApp}
             onBack={resetFlow}
             onDelete={handleDeleteApp}
+            onUpdate={handleUpdateApp}
             isDeleting={deletingId === selectedApp.id}
           />
         )}
@@ -165,6 +172,7 @@ export default function Home() {
             apps={apps}
             onCreateNew={handleCreateNew}
             onViewApp={handleViewApp}
+            isLoading={loading}
           />
         )}
       </main>
