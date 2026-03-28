@@ -1,66 +1,175 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Box, CircularProgress, Typography } from '@mui/material';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+import DashboardHome from '@/components/dashboard/DashboardHome';
+import CreateAppView from '@/components/create/CreateAppView';
+import AppDetailView from '@/components/dashboard/AppDetailView';
+
+function generateSlug(name) {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
 
 export default function Home() {
+  const [view, setView] = useState('dashboard');
+  const [selectedApp, setSelectedApp] = useState(null);
+  const [formData, setFormData] = useState({ name: '', android: '', ios: '' });
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [apps, setApps] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+
+  // Load apps from JSON on mount
+  useEffect(() => {
+    async function loadApps() {
+      try {
+        const response = await fetch('/api/apps');
+        if (response.ok) {
+          const data = await response.json();
+          setApps(data);
+        }
+      } catch (error) {
+        console.error('Error loading apps:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadApps();
+  }, []);
+
+  const resetFlow = () => {
+    setView('dashboard');
+    setFormData({ name: '', android: '', ios: '' });
+    setSelectedApp(null);
+  };
+
+  const handleCreateNew = () => {
+    setView('create');
+  };
+
+  const handleGenerateQR = async () => {
+    setIsGenerating(true);
+    
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const newApp = {
+      id: Date.now(),
+      name: formData.name || 'Untitled App',
+      slug: generateSlug(formData.name || 'untitled-app'),
+      status: 'Active',
+      scans: '0',
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      android: formData.android,
+      ios: formData.ios
+    };
+
+    try {
+      const response = await fetch('/api/apps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newApp)
+      });
+      
+      if (response.ok) {
+        setApps([newApp, ...apps]);
+        setView('detail');
+        setSelectedApp(newApp);
+      }
+    } catch (error) {
+      console.error('Error saving app:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleViewApp = (app) => {
+    setSelectedApp(app);
+    setView('detail');
+  };
+
+  const handleDeleteApp = async (appId) => {
+    setDeletingId(appId);
+    try {
+      const response = await fetch(`/api/apps?id=${appId}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        setApps(apps.filter(app => app.id !== appId));
+        resetFlow();
+      }
+    } catch (error) {
+      console.error('Error deleting app:', error);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ 
+        minHeight: '100vh', 
+        bgcolor: '#ffffff',
+        color: '#0f172a',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 2
+      }}>
+        <CircularProgress size={48} sx={{ color: '#2563eb' }} />
+        <Typography sx={{ color: '#64748b', fontWeight: 500 }}>
+          Loading your apps...
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <Box 
+      sx={{ 
+        minHeight: '100vh', 
+        bgcolor: '#ffffff',
+        color: '#0f172a',
+      }}
+    >
+      <Navbar onReset={resetFlow} />
+      
+      <main>
+        {view === 'create' && (
+          <CreateAppView 
+            formData={formData}
+            setFormData={setFormData}
+            isGenerating={isGenerating}
+            onReset={resetFlow}
+            onCreateNew={handleGenerateQR}
+          />
+        )}
+        {view === 'detail' && selectedApp && (
+          <AppDetailView 
+            app={selectedApp}
+            onBack={resetFlow}
+            onDelete={handleDeleteApp}
+            isDeleting={deletingId === selectedApp.id}
+          />
+        )}
+        {view === 'dashboard' && (
+          <DashboardHome 
+            apps={apps}
+            onCreateNew={handleCreateNew}
+            onViewApp={handleViewApp}
+          />
+        )}
       </main>
-    </div>
+
+      {view === 'dashboard' && <Footer />}
+    </Box>
   );
 }
