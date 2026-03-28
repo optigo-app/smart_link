@@ -25,6 +25,7 @@ export default function Home() {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState(null);
 
   // Load apps from JSON on mount
   useEffect(() => {
@@ -43,6 +44,32 @@ export default function Home() {
     }
     loadApps();
   }, []);
+
+  // Load dashboard analytics stats
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/analytics?period=30d');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            const s = data.stats;
+            setDashboardStats([
+              { label: 'Total Links', value: apps.length.toString(), icon: 'Link2', change: '+0 this week', color: '#2563eb' },
+              { label: 'Total Scans', value: (s.totalClicks || 0).toString(), icon: 'Smartphone', change: '+0%', color: '#059669' },
+              { label: 'Active Users', value: (s.uniqueUsers || 0).toString(), icon: 'Users', change: '+0%', color: '#7c3aed' },
+              { label: 'Conversion', value: `${s.conversionRate || 0}%`, icon: 'TrendingUp', change: '+0%', color: '#dc2626' },
+            ]);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+    if (!loading) {
+      loadStats();
+    }
+  }, [loading, apps.length]);
 
   const resetFlow = () => {
     setView('dashboard');
@@ -173,6 +200,7 @@ export default function Home() {
             onCreateNew={handleCreateNew}
             onViewApp={handleViewApp}
             isLoading={loading}
+            stats={dashboardStats}
           />
         )}
       </main>

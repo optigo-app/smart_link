@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import AppCard from './AppCard';
 
-const DashboardHome = ({ apps, onCreateNew, onViewApp, isLoading }) => {
+const DashboardHome = ({ apps, onCreateNew, onViewApp, isLoading, stats }) => {
   return (
     <Box sx={{ 
       maxWidth: 1600, 
@@ -139,12 +139,14 @@ const DashboardHome = ({ apps, onCreateNew, onViewApp, isLoading }) => {
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 5 }}>
-        {[
-          { label: 'Total Links', value: '12', icon: Link2, change: '+2 this week', color: '#2563eb' },
-          { label: 'Total Scans', value: '4,450', icon: Smartphone, change: '+18%', color: '#059669' },
-          { label: 'Active Users', value: '1,234', icon: Users, change: '+8%', color: '#7c3aed' },
-          { label: 'Conversion', value: '23.5%', icon: TrendingUp, change: '+2.1%', color: '#dc2626' },
-        ].map((stat, index) => (
+        {(
+          stats || [
+            { label: 'Total Links', value: '0', icon: Link2, change: '+0 this week', color: '#2563eb' },
+            { label: 'Total Scans', value: '0', icon: Smartphone, change: '+0%', color: '#059669' },
+            { label: 'Active Users', value: '0', icon: Users, change: '+0%', color: '#7c3aed' },
+            { label: 'Conversion', value: '0%', icon: TrendingUp, change: '+0%', color: '#dc2626' },
+          ]
+        ).map((stat, index) => (
           <Grid item size={{ xs: 6, md: 3 }} key={index}>
             <Paper
               sx={{

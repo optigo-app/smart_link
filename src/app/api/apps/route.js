@@ -23,8 +23,17 @@ function saveApps(apps) {
   }
 }
 
-export async function GET() {
-  const apps = getApps();
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const slug = searchParams.get('slug');
+  
+  let apps = getApps();
+  
+  // Filter by slug if provided
+  if (slug) {
+    apps = apps.filter(app => app.slug === slug);
+  }
+  
   return NextResponse.json(apps);
 }
 

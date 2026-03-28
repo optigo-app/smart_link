@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import { Smartphone, ExternalLink, ArrowLeft } from 'lucide-react';
@@ -10,41 +10,101 @@ export default function RedirectPage({ params }) {
   const searchParams = useSearchParams();
   const slug = params.slug;
   const data = searchParams?.get('data');
+  const [app, setApp] = useState(null);
+  const [loading, setLoading] = useState(true);
   
-  let app = null;
+  // Fetch app data from API
+  useEffect(() => {
+    async function fetchApp() {
+      try {
+        const response = await fetch(`/api/apps?slug=${slug}`);
+        if (response.ok) {
+          const apps = await response.json();
+          if (apps.length > 0) {
+            setApp(apps[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching app:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchApp();
+  }, [slug]);
+
+  // Try to parse from query param as fallback
+  let queryApp = null;
   try {
     if (data) {
-      app = JSON.parse(atob(data));
+      queryApp = JSON.parse(atob(data));
     }
   } catch (e) {
     // Invalid data
   }
-  
-  // Fallback for demo purposes
-  if (!app) {
-    const appData = {
-      'fitnesstracker-pro': { name: 'FitnessTracker Pro', android: 'https://play.google.com', ios: 'https://apps.apple.com' },
-      'ecoeat-delivery': { name: 'EcoEat Delivery', android: 'https://play.google.com', ios: 'https://apps.apple.com' },
-      'zenmind-meditation': { name: 'ZenMind Meditation', android: 'https://play.google.com', ios: 'https://apps.apple.com' },
-      'taskflow-manager': { name: 'TaskFlow Manager', android: 'https://play.google.com', ios: 'https://apps.apple.com' },
-      'cryptotracker': { name: 'CryptoTracker', android: 'https://play.google.com', ios: 'https://apps.apple.com' },
-    };
-    app = appData[slug];
-  }
-  
+
+  // Use query app as fallback
   useEffect(() => {
+    if (!app && queryApp) {
+      setApp(queryApp);
+      setLoading(false);
+    }
+  }, [app, queryApp]);
+
+  // Track click function
+  const trackClick = async (platform) => {
     if (!app) return;
     
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isAndroid = userAgent.includes('android');
-    const isIOS = /iphone|ipad|ipod/.test(userAgent) || (userAgent.includes('os') && userAgent.includes('mobile'));
-    
-    if (isAndroid && app.android) {
+    try {
+      await fetch('/api/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appId: app.id,
+          appSlug: app.slug,
+          appName: app.name,
+          platform,
+          userAgent: navigator.userAgent,
+          timestamp: new Date().toISOString()
+        })
+      });
+    } catch (error) {
+      console.error('Error tracking click:', error);
+    }
+  };
+
+  const handleAndroidClick = () => {
+    trackClick('android');
+    if (app?.android) {
       window.location.href = app.android;
-    } else if (isIOS && app.ios) {
+    }
+  };
+
+  const handleIOSClick = () => {
+    trackClick('ios');
+    if (app?.ios) {
       window.location.href = app.ios;
     }
-  }, [app]);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ 
+        minHeight: '100vh', 
+        bgcolor: '#f8fafc',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 3
+      }}>
+        <Paper sx={{ p: 5, maxWidth: 500, textAlign: 'center', borderRadius: 4 }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mb: 2 }}>
+            Loading...
+          </Typography>
+        </Paper>
+      </Box>
+    );
+  }
 
   if (!app) {
     return (
@@ -118,9 +178,7 @@ export default function RedirectPage({ params }) {
               fullWidth
               startIcon={<Smartphone size={20} />}
               endIcon={<ExternalLink size={16} />}
-              href={app.android}
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={handleAndroidClick}
               sx={{
                 bgcolor: '#0f172a',
                 py: 2,
@@ -139,9 +197,7 @@ export default function RedirectPage({ params }) {
               fullWidth
               startIcon={<Smartphone size={20} />}
               endIcon={<ExternalLink size={16} />}
-              href={app.ios}
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={handleIOSClick}
               sx={{
                 borderColor: '#e2e8f0',
                 color: '#0f172a',

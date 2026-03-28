@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -54,11 +54,33 @@ const AppDetailView = ({ app, onBack, onDelete, onUpdate, isDeleting }) => {
   const [uploading, setUploading] = useState(false);
   const [previewIcon, setPreviewIcon] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [analytics, setAnalytics] = useState(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   const slug = app.slug || app.name.toLowerCase().replace(/\s+/g, '-');
   const smartLink = `/a/${slug}`;
   const fullUrl = typeof window !== 'undefined' ? window.location.origin + smartLink : smartLink;
   const displayApp = isEditing ? { ...app, ...editData } : app;
+
+  // Fetch analytics data
+  useEffect(() => {
+    async function fetchAnalytics() {
+      try {
+        const response = await fetch(`/api/analytics?appId=${app.id}&period=30d`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setAnalytics(data.stats);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+      } finally {
+        setLoadingAnalytics(false);
+      }
+    }
+    fetchAnalytics();
+  }, [app.id]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(fullUrl);
@@ -194,11 +216,21 @@ const AppDetailView = ({ app, onBack, onDelete, onUpdate, isDeleting }) => {
     }
   };
 
-  const stats = [
-    { label: 'Total Scans', value: displayApp.scans, icon: MousePointerClick, color: '#2563eb', change: '+12%' },
-    { label: 'Unique Users', value: '342', icon: Users, color: '#059669', change: '+8%' },
-    { label: 'Conversion Rate', value: '23.5%', icon: TrendingUp, color: '#7c3aed', change: '+2.1%' },
-    { label: 'Avg. Session', value: '2m 34s', icon: Smartphone, color: '#dc2626', change: '-5%' },
+  const stats = loadingAnalytics ? [
+    { label: 'Total Scans', value: '-', icon: MousePointerClick, color: '#2563eb', change: '...' },
+    { label: 'Unique Users', value: '-', icon: Users, color: '#059669', change: '...' },
+    { label: 'Conversion Rate', value: '-', icon: TrendingUp, color: '#7c3aed', change: '...' },
+    { label: 'Avg. Session', value: '-', icon: Smartphone, color: '#dc2626', change: '...' },
+  ] : analytics ? [
+    { label: 'Total Scans', value: analytics.totalClicks?.toString() || '0', icon: MousePointerClick, color: '#2563eb', change: '+12%' },
+    { label: 'Unique Users', value: analytics.uniqueUsers?.toString() || '0', icon: Users, color: '#059669', change: '+8%' },
+    { label: 'Conversion Rate', value: `${analytics.conversionRate || 0}%`, icon: TrendingUp, color: '#7c3aed', change: '+2.1%' },
+    { label: 'Avg. Session', value: analytics.avgSessionTime || '0s', icon: Smartphone, color: '#dc2626', change: '-5%' },
+  ] : [
+    { label: 'Total Scans', value: '0', icon: MousePointerClick, color: '#2563eb', change: '+0%' },
+    { label: 'Unique Users', value: '0', icon: Users, color: '#059669', change: '+0%' },
+    { label: 'Conversion Rate', value: '0%', icon: TrendingUp, color: '#7c3aed', change: '+0%' },
+    { label: 'Avg. Session', value: '0s', icon: Smartphone, color: '#dc2626', change: '+0%' },
   ];
 
   return (
